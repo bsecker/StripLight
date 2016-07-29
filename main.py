@@ -10,20 +10,67 @@ except ImportError, _err:
     sys.exit()
 
 class ArduinoSerial:
-    """main serial communication module that handles writing to serial"""
+    """main  module that handles writing to serial and API"""
     def __init__(self):
         self.ser = serial.Serial('COM4', 9600)
+        self.color_temp = 4000
+        self.lights_on = True #override lights
 
     def set_color(self, color):
         """convert to serial message and send
         takes [rrr,ggg,bbb] as list input"""
-        self.ser.write("c")
         self.ser.write(chr(int(color[0])))
         self.ser.write(chr(int(color[1])))
         self.ser.write(chr(int(color[2])))
 
     def terminate(self):
         self.ser.close()
+
+    def main_loop(self):
+        """main loop. check for pings, update colour."""
+        while True:
+            self.set_night_temperature()
+            time.sleep(1)
+
+            if self.lights_on:
+                self.set_color(convert_K_to_RGB(self.color_temp))
+            else:
+                self.set_color([0,0,0])
+                
+            print "temp: ", self.color_temp
+
+    def set_night_temperature(self):
+        """at specific times fade to certain temperature points"""
+        _fade = 0
+        if int(time.strftime("%H")) >= 0: #morning
+            _fade = 4000
+
+        if int(time.strftime("%H")) >= 19: #
+            _fade = 3500
+
+        if int(time.strftime("%H")) >= 20:
+            _fade = 3000
+
+        if int(time.strftime("%H")) >= 21:
+            _fade = 2500
+
+        if int(time.strftime("%H")) >= 22:
+            _fade = 2000
+
+        if int(time.strftime("%H%M")) >= 2230:
+            _fade = 1000
+
+        print _fade
+        self.fade_to_color(_fade)
+
+
+    def fade_to_color(self, color):
+        """fade current colour temperature to given color"""
+        if self.color_temp < color:
+            self.color_temp += 100
+        elif self.color_temp > color:
+            self.color_temp +=- 100
+
 
 def convert_K_to_RGB(colour_temperature):
     """
@@ -84,18 +131,11 @@ def convert_K_to_RGB(colour_temperature):
     
     return [int(red), int(green), int(blue)]
 
-
-
 def main():
     arduino_serial = ArduinoSerial()
     time.sleep(2)
-    temp = 4000
-    while temp > 1000:
-        temperature = convert_K_to_RGB(temp)
-        arduino_serial.ser.write(temperature)
-        temp +=- 50
-        time.sleep(0.2)
-        print(temp)
+    print("initialised")
+    arduino_serial.main_loop()
     arduino_serial.terminate()
 
 if __name__ == '__main__':

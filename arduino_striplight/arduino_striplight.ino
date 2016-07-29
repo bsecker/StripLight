@@ -16,23 +16,11 @@ void setup() {
 
 void loop() {
   // if there is cereal, eat it
-  while (Serial.available() > 3 ) {
-
-    // first byte determines the type of message.
-    switch( byte( Serial.read() )){
-      case 'c': // Colour
+  while (Serial.available() > 2 ) {
         colorRGB[0] = Serial.read();
         colorRGB[1] = Serial.read();
         colorRGB[2] = Serial.read();
-        break;
-      case 'e': // Error
-        Serial.flush();
-        set_error();
-        break;
-      case 'p': // Ping
-        Serial.flush();
-        get_ping();
-        break;
+
     }
     
     
@@ -42,13 +30,4 @@ void loop() {
     analogWrite(bluePin, colorRGB[2]);
     
   }
-}
 
-void set_error() {
-  // blink red
-  ;
-}
-
-void get_ping() {
-  ;
-}
