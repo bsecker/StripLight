@@ -1,6 +1,6 @@
 int colorRGB[3];
-int redPin = 11;
-int greenPin = 10;
+int redPin = 10;
+int greenPin = 11;
 int bluePin = 9;
 
 int delayVal = 50;

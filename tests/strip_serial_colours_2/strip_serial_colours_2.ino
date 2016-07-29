@@ -34,7 +34,7 @@ void setup() {
 
 void loop() {
   // if there's any serial available, read it:
-  while (Serial.available() >=2 ) {
+  while (Serial.available() > 2 ) {
     colorRGB[0] = Serial.read();
     colorRGB[1] = Serial.read();
     colorRGB[2] = Serial.read();
