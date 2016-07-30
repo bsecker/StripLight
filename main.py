@@ -5,6 +5,7 @@ try:
     import serial
     import time
     import math
+
 except ImportError, _err:
     print("couldn't load module. {0}".format(_err))
     sys.exit()
@@ -30,13 +31,15 @@ class ArduinoSerial:
         """main loop. check for pings, update colour."""
         while True:
             self.set_night_temperature()
-            time.sleep(1)
+            time.sleep(5)
 
+
+            # enable lights or not
             if self.lights_on:
                 self.set_color(convert_K_to_RGB(self.color_temp))
             else:
                 self.set_color([0,0,0])
-                
+
             print "temp: ", self.color_temp
 
     def set_night_temperature(self):
@@ -67,9 +70,9 @@ class ArduinoSerial:
     def fade_to_color(self, color):
         """fade current colour temperature to given color"""
         if self.color_temp < color:
-            self.color_temp += 100
+            self.color_temp += 10
         elif self.color_temp > color:
-            self.color_temp +=- 100
+            self.color_temp +=- 10
 
 
 def convert_K_to_RGB(colour_temperature):
@@ -137,6 +140,8 @@ def main():
     print("initialised")
     arduino_serial.main_loop()
     arduino_serial.terminate()
+
+
 
 if __name__ == '__main__':
     main()
