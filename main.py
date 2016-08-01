@@ -63,7 +63,7 @@ class ArduinoSerial:
         if int(time.strftime("%H%M")) >= 2230:
             _fade = 1000
 
-        print _fade
+        print "fading to: ", _fade
         self.fade_to_color(_fade)
 
 

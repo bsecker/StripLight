@@ -22,6 +22,7 @@ void loop() {
         colorRGB[2] = Serial.read();
 
     }
+
     
     
     // fade the red, green, and blue legs of the LED:
