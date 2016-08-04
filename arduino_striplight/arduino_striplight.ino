@@ -2,8 +2,26 @@
 const int redPin = 10;      //Arduino driving pin for Red
 const int greenPin = 11;    //Arduino driving pin for Green
 const int bluePin = 9;      //Arduino driving pin for Blue
-
 int colorRGB[3];
+
+unsigned long previous_time = 0;
+const long timeout_interval = 10; //Timeout to automatically turn off lights 
+
+void setColor(int red, int green, int blue)
+{
+  // fade the red, green, and blue legs of the LED:
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue);  
+ 
+}
+
+void setOff(){
+  // turn all pins off
+  analogWrite(redPin, 0);
+  analogWrite(greenPin, 0);
+  analogWrite(bluePin, 0);  
+}
 
 void setup() {
   // initialize serial:
@@ -12,23 +30,28 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
+
 }
 
 void loop() {
-  // if there is cereal, eat it
+
+  unsigned long current_time = millis();
+
+  // Read Serial Messages 
   while (Serial.available() > 2 ) {
         colorRGB[0] = Serial.read();
         colorRGB[1] = Serial.read();
         colorRGB[2] = Serial.read();
-
     }
 
-    
-    
-    // fade the red, green, and blue legs of the LED:
-    analogWrite(redPin, colorRGB[0]);
-    analogWrite(greenPin, colorRGB[1]);
-    analogWrite(bluePin, colorRGB[2]);
-    
+  if (current_time - previous_time >= timeout_interval){
+    setOff();
+  }
+  else {
+    setColor(colorRGB[0], colorRGB[1], colorRGB[2]);
   }
 
+  previous_time = current_time;
+
+
+}
