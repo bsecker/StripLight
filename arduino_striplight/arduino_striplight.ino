@@ -6,6 +6,7 @@ int colorRGB[3];
 
 unsigned long previous_time = 0;
 const long timeout_interval = 10; //Timeout to automatically turn off lights 
+bool enable_pins = 1;
 
 void setColor(int red, int green, int blue)
 {
@@ -45,12 +46,22 @@ void loop() {
     }
 
   if (current_time - previous_time >= timeout_interval){
-    setOff();
+    enable_pins = 0; //turn off
   }
   else {
-    setColor(colorRGB[0], colorRGB[1], colorRGB[2]);
+    enable_pins = 1;
   }
+  
+  setColor(colorRGB[0], colorRGB[1], colorRGB[2]);
 
+  /*
+
+  BIG ASS COMMENT FOR NEXT TIME:
+  completely redo timeouts
+  
+
+
+  */
   previous_time = current_time;
 
 

@@ -10,6 +10,9 @@ except ImportError, _err:
     print("couldn't load module. {0}".format(_err))
     sys.exit()
 
+# notification color constants
+RED = (255, 0, 0)
+
 class ArduinoSerial:
     """main  module that handles writing to serial and API"""
     def __init__(self):
@@ -29,21 +32,43 @@ class ArduinoSerial:
 
     def main_loop(self):
         """main loop. check for pings, update colour."""
-        while True:
-            self.set_night_temperature()
-            time.sleep(5)
+        time.sleep(1)
+        self.set_lights("on")
+        time.sleep(1)
+        self.set_lights("notify", color = RED, blink_speed = 0.3, repeats = 2)
+        time.sleep(1)
+        self.set_lights("off")
 
+    def set_lights(self, status = "on", **args):
+        """
+        Set lights to a color, or blink.
+        status = [on, off, notify]
+        color = RGB color to blink 
+        blink_speed = speed to blink at
+        repeats = number of times to blink
 
-            # enable lights or not
-            if self.lights_on:
-                self.set_color(convert_K_to_RGB(self.color_temp))
-            else:
-                self.set_color([0,0,0])
+        """
+        # enable lights or not
+        if status == "on":
+            self.color_temp = self.set_night_temperature()
+            self.set_color(convert_K_to_RGB(self.color_temp))
+        elif status == "off":
+            self.set_color([0,0,0])
+        elif status == "notify":
+            self.blink(args)
 
-            print "temp: ", self.color_temp
+        print "temp: ", self.color_temp
+
+    def blink(self, args):
+        """blink lights on and off"""
+        for _i in range(args["repeats"]):
+            self.set_color(args["color"])
+            time.sleep(args["blink_speed"])
+            self.set_color(convert_K_to_RGB(self.color_temp))
+            time.sleep(args["blink_speed"])
 
     def set_night_temperature(self):
-        """at specific times fade to certain temperature points"""
+        """at specific times fade to certain temperature points. replace with curve"""
         _fade = 0
         if int(time.strftime("%H")) >= 0: #morning
             _fade = 4000
@@ -64,15 +89,16 @@ class ArduinoSerial:
             _fade = 1000
 
         print "fading to: ", _fade
-        self.fade_to_color(_fade)
+        return self.fade_to_color(_fade, self.color_temp)
 
-
-    def fade_to_color(self, color):
+    def fade_to_color(self, color, color_temp):
         """fade current colour temperature to given color"""
-        if self.color_temp < color:
-            self.color_temp += 10
-        elif self.color_temp > color:
-            self.color_temp +=- 10
+        if color_temp < color:
+            color_temp += 10
+        elif color_temp > color:
+            color_temp +=- 10
+
+        return color_temp
 
 
 def convert_K_to_RGB(colour_temperature):
