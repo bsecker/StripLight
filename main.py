@@ -1,10 +1,14 @@
-"""Python program for interfacing with the RGB strip lights"""
+"""Python program for interfacing with the RGB strip lights
+Timer currently uses threading
+"""
 
 try:
     import sys
     import serial
     import time
     import math
+    from flask import Flask, render_template, request
+    from threading import Timer, Thread
 
 except ImportError, _err:
     print("couldn't load module. {0}".format(_err))
@@ -13,12 +17,15 @@ except ImportError, _err:
 # notification color constants
 RED = (255, 0, 0)
 
+# Flask webserver
+app = Flask(__name__)
+
 class ArduinoSerial:
-    """main  module that handles writing to serial and API"""
+    """main class that handles writing to serial and API"""
     def __init__(self):
         self.ser = serial.Serial('COM4', 9600)
         self.color_temp = 4000
-        self.lights_on = True #override lights
+        self.light_status = "on" #override lights
 
     def set_color(self, color):
         """convert to serial message and send
@@ -160,14 +167,77 @@ def convert_K_to_RGB(colour_temperature):
     
     return [int(red), int(green), int(blue)]
 
-def main():
-    arduino_serial = ArduinoSerial()
-    time.sleep(2)
-    print("initialised")
-    arduino_serial.main_loop()
-    arduino_serial.terminate()
+class Scheduler(object):
+    """https://gist.github.com/chadselph/4ff85c8c4f68aa105f4b
+    Use multiple threads to make a timer for writing to serial every 5 seconds
+    """
 
+    def __init__(self, sleep_time, function):
+        self.sleep_time = sleep_time
+        self.function = function
+        self._t = None
+
+    def start(self):
+        if self._t is None:
+            self._t = Timer(self.sleep_time, self._run)
+            self._t.start()
+        else:
+            raise Exception("this timer is already running")
+
+    def _run(self):
+        self.function(arduino_serial.light_status)
+        self._t = Timer(self.sleep_time, self._run)
+        self._t.start()
+
+    def stop(self):
+        if self._t is not None:
+            self._t.cancel()
+            self._t = None
+
+
+@app.route("/")
+def main():
+    try: 
+        # setup unless already done that - TO DO: FIX THIS BIT UP. CURRENTLY {VERY} BAD
+        global arduino_serial, scheduler
+        arduino_serial = ArduinoSerial()
+        time.sleep(2)
+        print("Initialised Serial")
+        arduino_serial.set_lights("on")
+
+        # set lights every 5 seconds
+        scheduler = Scheduler(5, arduino_serial.set_lights)
+        scheduler.start()
+    except: # FIX THIS BIT TO PROPERLY HANDLE ERRORS.
+        pass
+
+    templateData = {
+      'title' : 'HELLO!',
+      'name' : 'Benjamin',
+      'light_status' : arduino_serial.light_status,
+      'fade_to' : arduino_serial.color_temp,
+      }
+    return render_template('index.html', **templateData)
+
+@app.route("/toggle")
+def toggle_leds():
+    if arduino_serial.light_status == "off":
+        arduino_serial.light_status = "on"
+    else:
+        arduino_serial.light_status = "off"
+    
+    templateData = {
+      'title' : 'HELLO!',
+      'name' : 'Benjamin',
+      'light_status' : arduino_serial.light_status,
+      'fade_to' : arduino_serial.color_temp,
+      }
+
+    return render_template('index.html', **templateData)
 
 
 if __name__ == '__main__':
-    main()
+    app.run(host='0.0.0.0', port=85, debug=True)
+    scheduler.stop()
+    arduino_serial.terminate()
+    
