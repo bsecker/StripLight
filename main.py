@@ -71,7 +71,7 @@ class ArduinoSerial:
         for _i in range(args["repeats"]):
             self.set_color(args["color"])
             time.sleep(args["blink_speed"])
-            self.set_color(convert_K_to_RGB(self.color_temp))
+            self.set_color([0, 0, 0])
             time.sleep(args["blink_speed"])
 
     def set_night_temperature(self):
@@ -235,6 +235,18 @@ def toggle_leds():
 
     return render_template('index.html', **templateData)
 
+@app.route("/notify")
+def notify_leds():
+    arduino_serial.set_lights("notify", color = RED, blink_speed = 0.3, repeats = 2)
+
+    templateData = {
+      'title' : 'HELLO!',
+      'name' : 'Benjamin',
+      'light_status' : arduino_serial.light_status,
+      'fade_to' : arduino_serial.color_temp,
+      }
+
+    return render_template('index.html', **templateData)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=85, debug=True)
